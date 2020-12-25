@@ -85,7 +85,7 @@ namespace LR4
 
         public class CircleStorage // Класс-хранилище фигур
         {
-            public delegate void AddedNode(CCircle circ);
+            public delegate void AddedNode();
             public event AddedNode Notify;
 
             int div(int a, int b)
@@ -149,6 +149,7 @@ namespace LR4
                 {
                     this.arr[selected[q]].flag = true;
                 }
+                Notify.Invoke();
                 return select;
             }
 
@@ -162,6 +163,7 @@ namespace LR4
                         {
                             if (x > group.arr[q].x - group.arr[q].r / 2 && x < group.arr[q].x + group.arr[q].r / 2 && y > group.arr[q].y - group.arr[q].r / 2 && y < group.arr[q].y + group.arr[q].r / 2)
                             {
+
                                 return true;
                             }
                         }
@@ -188,13 +190,13 @@ namespace LR4
             public void AddStor(CCircle circ) // Добавление созданного объекта в хранилище
             {
                 arr.Add(circ);
-                Notify.Invoke(circ);
+                Notify.Invoke();
             }
 
             public void DelStor(CCircle circ)
             {
                 arr.Remove(circ);
-                Notify.Invoke(circ);
+                Notify.Invoke();
             }
 
             public void SaveStor()
@@ -818,34 +820,42 @@ namespace LR4
             }
         }
 
-        public TreeNode treeGroup(CCircle circ, int j)
+        unsafe public TreeNode treeGroup(CCircle circ, int j, int *count)
         {
             TreeNode trNd = new TreeNode();
             if (circ.IfGroup() == 0)
             {
                 trNd.Text = Convert.ToString(j);
+                if (circ.flag)
+                    treeView1.SelectedNode = trNd;
                 return trNd;
             }
             else
             {
+                j = *count;
+                trNd.Text = "Группа " + Convert.ToString(j);
                 for (int i = 0; i < circ.arr.Count; i++)
                 {
-                    trNd.Nodes.Add(treeGroup(circ.arr[i], i));
+                    trNd.Nodes.Add(treeGroup(circ.arr[i], 1 + j + i, count));
                 }
-                trNd.Text = "Группа " + Convert.ToString(j) ;
+                *count += circ.arr.Count + 1;
+
+                if (circ.flag)
+                    treeView1.SelectedNode = trNd;
                 return trNd;
             }
         }
 
-        public void updateTree(CCircle circ)
+        unsafe public void updateTree()
         {
             for (int i = 0; i < stor.arr.Count; i++)
             {
                 treeView1.Nodes[0].Nodes.Clear();
             }
+            int count = 0;
             for (int i = 0; i < stor.arr.Count; i++)
             {
-                treeView1.Nodes[0].Nodes.Add(treeGroup(stor.arr[i], i));
+                treeView1.Nodes[0].Nodes.Add(treeGroup(stor.arr[i], i, &count));
             }
         }
 
@@ -875,7 +885,7 @@ namespace LR4
             GroupedFigures group = new GroupedFigures();
             for (int j = 0; j < stor.arr.Count; j++)
             {
-                if (stor.arr[j].flag == true)
+                if (stor.arr[j].flag)
                 {
                     group.AddGroup(stor.arr[j]);
                     stor.DelStor(stor.arr[j]);
@@ -933,6 +943,66 @@ namespace LR4
                         Draw(stor.arr[j], stor.arr[j].clr);
                     else
                         DrawGroup(stor.arr[j], stor.arr[j].clr);
+                }
+            }
+        }
+
+        private void TreeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            int selInd = treeView1.SelectedNode.Index;
+            if (ModifierKeys.HasFlag(Keys.Control) != true)
+            {
+                for (int j = 0; j < stor.arr.Count; j++)
+                {
+                    stor.arr[j].flag = false;
+                }
+            }
+            stor.arr[selInd].flag = true;
+            for (int j = 0; j < stor.arr.Count; j++)
+            {
+                if (stor.arr[j].flag)
+                {
+                    if (stor.arr[j].IfGroup() == 1)
+                        DrawGroup(stor.arr[j], Color.Red);
+                    else
+                        Draw(stor.arr[j], Color.Red);
+                }
+                else
+                {
+                    if (stor.arr[j].IfGroup() == 1)
+                        DrawGroup(stor.arr[j], stor.arr[j].clr);
+                    else
+                        Draw(stor.arr[j], stor.arr[j].clr);
+                }
+            }
+        }
+
+        private void TreeView1_AfterSelect(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            int selInd = treeView1.SelectedNode.Index;
+            if (ModifierKeys.HasFlag(Keys.Control) != true)
+            {
+                for (int j = 0; j < stor.arr.Count; j++)
+                {
+                    stor.arr[j].flag = false;
+                }
+            }
+            stor.arr[selInd].flag = true;
+            for (int j = 0; j < stor.arr.Count; j++)
+            {
+                if (stor.arr[j].flag)
+                {
+                    if (stor.arr[j].IfGroup() == 1)
+                        DrawGroup(stor.arr[j], Color.Red);
+                    else
+                        Draw(stor.arr[j], Color.Red);
+                }
+                else
+                {
+                    if (stor.arr[j].IfGroup() == 1)
+                        DrawGroup(stor.arr[j], stor.arr[j].clr);
+                    else
+                        Draw(stor.arr[j], stor.arr[j].clr);
                 }
             }
         }

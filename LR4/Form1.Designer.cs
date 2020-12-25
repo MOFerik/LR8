@@ -223,6 +223,7 @@
             this.treeView1.Name = "treeView1";
             this.treeView1.Size = new System.Drawing.Size(264, 468);
             this.treeView1.TabIndex = 15;
+            this.treeView1.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.TreeView1_AfterSelect);
             // 
             // Form1
             // 
