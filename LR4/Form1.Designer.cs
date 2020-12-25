@@ -67,7 +67,8 @@
             "Квадрат",
             "Треугольник",
             "Отрезок",
-            "Точка"});
+            "Точка",
+            "Клейкий"});
             this.listBox1.Location = new System.Drawing.Point(636, 12);
             this.listBox1.Name = "listBox1";
             this.listBox1.Size = new System.Drawing.Size(198, 84);

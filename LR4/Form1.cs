@@ -83,11 +83,125 @@ namespace LR4
             }
         }
 
+        public class Glue : CCircle
+        {
+            public delegate void glMoved();
+            public event glMoved glMove;
+            public int figure = 5;
+            
+        }
+
+        public void AddGlued(CCircle glue, CCircle circ)
+        {
+            glue.arr.Add(circ);
+        }
+
+        public void DeleteGlued(CCircle glue, CCircle circ)
+        {
+            glue.arr.Remove(circ);
+        }
+
+        public void MoveGlued(CCircle circ, int dx, int dy)
+        {
+            if (circ.IfGroup() == 0)
+            {
+                Draw(circ, Color.White);
+                circ.x += dx;
+                circ.y += dy;
+                Draw(circ, circ.clr);
+            }
+            else
+            {
+                for (int i = 0; i < circ.arr.Count; i++)
+                {
+                    MoveGlued(circ.arr[i], dx, dy);
+                }
+            }
+        }
+
+        public void GlueTo(int x, int y, int r, CCircle glue)
+        {
+            for (int j = 0; j < stor.arr.Count; j++)
+            {
+                if (stor.arr[j] != glue)
+                {
+                    if (stor.arr[j].IfGroup() == 0)
+                    {
+                        if (stor.arr[j].figure != 3)
+                        {
+                            if ((Math.Abs(x - stor.arr[j].x) < r / 2 + stor.arr[j].r / 2) && (Math.Abs(y - stor.arr[j].y) < r / 2 + stor.arr[j].r / 2))
+                            {
+                                int found = 0;
+                                for (int q = 0; q < glue.arr.Count; q++)
+                                {
+                                    if (glue.arr[q] == stor.arr[j])
+                                        found++;
+                                }
+                                if (found == 0)
+                                    AddGlued(glue, stor.arr[j]);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bool found = false;
+                        found = stor.CheckGroup(x - glue.r / 2, y - glue.r/2, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x + glue.r / 2, y + glue.r/2, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x - glue.r/2, y + glue.r / 2, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x + glue.r/2, y - glue.r / 2, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x, y - glue.r / 2, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x, y + glue.r / 2, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x - glue.r / 2, y, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                        found = stor.CheckGroup(x + glue.r / 2, y, stor.arr[j]);
+                        if (found)
+                        {
+                            AddGlued(glue, stor.arr[j]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         public class CircleStorage // Класс-хранилище фигур
         {
             public delegate void AddedNode();
             public event AddedNode Notify;
-
             int div(int a, int b)
             {
                 if (b != 0)
@@ -307,6 +421,9 @@ namespace LR4
                 case 4:
                     panel1.CreateGraphics().FillEllipse(brush, dot);
                     break;
+                case 5:
+                    panel1.CreateGraphics().DrawEllipse(mPen, rect);
+                    break;
             }
         }
 
@@ -347,6 +464,9 @@ namespace LR4
                             break;
                         case 4:
                             panel1.CreateGraphics().FillEllipse(brush, dot);
+                            break;
+                        case 5:
+                            this.panel1.CreateGraphics().DrawEllipse(mPen, rect);
                             break;
                     }
                 }
@@ -451,8 +571,8 @@ namespace LR4
                                         break;
                                     default:
                                         this.panel1.CreateGraphics().DrawEllipse(aPen, rect);
-                                        circ.figure = 0;
-                                        break;
+                                        circ.figure = 5;
+                                    break;
                                 }
                             }
                     }
@@ -464,15 +584,20 @@ namespace LR4
         {
             for (int j = 0; j < stor.arr.Count; j++)
             {
-                    if (stor.arr[j].flag == true)
+                if (stor.arr[j].flag == true)
+                {
+                    for (int q = 0; q < stor.arr.Count; q++)
                     {
-                        if (stor.arr[j].IfGroup() == 0)
-                            Draw(stor.arr[j], Color.White);
-                        else
-                            DrawGroup(stor.arr[j], Color.White);
-                        stor.DelStor(stor.arr[j]);
-                        j--;
+                        if(stor.arr[q].figure == 5)
+                            DeleteGlued(stor.arr[q], stor.arr[j]);
                     }
+                    if (stor.arr[j].IfGroup() == 0)
+                        Draw(stor.arr[j], Color.White);
+                    else
+                        DrawGroup(stor.arr[j], Color.White);
+                    stor.DelStor(stor.arr[j]);
+                    j--;
+                }
             }
             for (int j = 0; j < stor.arr.Count; j++)
             {
@@ -552,7 +677,18 @@ namespace LR4
                 {
                     if (stor.arr[j].IfGroup() == 0)
                     {
-                        if (stor.arr[j].figure == 3)
+                        if ((stor.arr[j].figure == 5) && (stor.arr[j].y - (stor.arr[j].r / 2) > 0))
+                        {
+                            Draw(stor.arr[j], Color.White);
+                            stor.arr[j].y--;
+                            Draw(stor.arr[j], Color.Red);
+                            GlueTo(stor.arr[j].x, stor.arr[j].y, stor.arr[j].r, stor.arr[j]);
+                            for (int i = 0; i < stor.arr[j].arr.Count; i++)
+                            {
+                                MoveGlued(stor.arr[j].arr[i], 0, -1);
+                            }
+                        }
+                        else if (stor.arr[j].figure == 3)
                         {
                             if ((stor.readyLine == -1) && (stor.arr[j].lineY1 > 0) && (stor.arr[j].lineY2 > 0))
                             {
@@ -621,6 +757,17 @@ namespace LR4
                 {
                     if (stor.arr[j].IfGroup() == 0)
                     {
+                        if ((stor.arr[j].figure == 5) && (stor.arr[j].y + (stor.arr[j].r / 2) < panel1.Height - 4))
+                        {
+                            Draw(stor.arr[j], Color.White);
+                            stor.arr[j].y++;
+                            Draw(stor.arr[j], Color.Red);
+                            GlueTo(stor.arr[j].x, stor.arr[j].y, stor.arr[j].r, stor.arr[j]);
+                            for (int i = 0; i < stor.arr[j].arr.Count; i++)
+                            {
+                                MoveGlued(stor.arr[j].arr[i], 0, 1);
+                            }
+                        }
                         if (stor.arr[j].figure == 3)
                         {
                             if ((stor.readyLine == -1) && (stor.arr[j].lineY1 < panel1.Height - 4) && (stor.arr[j].lineY2 < panel1.Height - 4))
@@ -690,6 +837,17 @@ namespace LR4
                 {
                     if (stor.arr[j].IfGroup() == 0)
                     {
+                        if ((stor.arr[j].figure == 5) && (stor.arr[j].x - (stor.arr[j].r / 2) > 0))
+                        {
+                            Draw(stor.arr[j], Color.White);
+                            stor.arr[j].x--;
+                            Draw(stor.arr[j], Color.Red);
+                            GlueTo(stor.arr[j].x, stor.arr[j].y, stor.arr[j].r, stor.arr[j]);
+                            for (int i = 0; i < stor.arr[j].arr.Count; i++)
+                            {
+                                MoveGlued(stor.arr[j].arr[i], -1, 0);
+                            }
+                        }
                         if (stor.arr[j].figure == 3)
                         {
                             if ((stor.readyLine == -1) && (stor.arr[j].lineX1 > 0) && (stor.arr[j].lineX2 > 0))
@@ -759,6 +917,17 @@ namespace LR4
                 {
                     if (stor.arr[j].IfGroup() == 0)
                     {
+                        if ((stor.arr[j].figure == 5) && (stor.arr[j].x + (stor.arr[j].r / 2) < panel1.Height - 44))
+                        {
+                            Draw(stor.arr[j], Color.White);
+                            stor.arr[j].x++;
+                            Draw(stor.arr[j], Color.Red);
+                            GlueTo(stor.arr[j].x, stor.arr[j].y, stor.arr[j].r, stor.arr[j]);
+                            for (int i = 0; i < stor.arr[j].arr.Count; i++)
+                            {
+                                MoveGlued(stor.arr[j].arr[i], 1, 0);
+                            }
+                        }
                         if (stor.arr[j].figure == 3)
                         {
                             if ((stor.readyLine == -1) && (stor.arr[j].lineX1 < panel1.Height - 44) && (stor.arr[j].lineX2 < panel1.Height - 44))
@@ -979,30 +1148,33 @@ namespace LR4
 
         private void TreeView1_AfterSelect(object sender, TreeNodeMouseClickEventArgs e)
         {
-            int selInd = treeView1.SelectedNode.Index;
-            if (ModifierKeys.HasFlag(Keys.Control) != true)
+            if (treeView1.SelectedNode != null)
             {
+                int selInd = treeView1.SelectedNode.Index;
+                if (ModifierKeys.HasFlag(Keys.Control) != true)
+                {
+                    for (int j = 0; j < stor.arr.Count; j++)
+                    {
+                        stor.arr[j].flag = false;
+                    }
+                }
+                stor.arr[selInd].flag = true;
                 for (int j = 0; j < stor.arr.Count; j++)
                 {
-                    stor.arr[j].flag = false;
-                }
-            }
-            stor.arr[selInd].flag = true;
-            for (int j = 0; j < stor.arr.Count; j++)
-            {
-                if (stor.arr[j].flag)
-                {
-                    if (stor.arr[j].IfGroup() == 1)
-                        DrawGroup(stor.arr[j], Color.Red);
+                    if (stor.arr[j].flag)
+                    {
+                        if (stor.arr[j].IfGroup() == 1)
+                            DrawGroup(stor.arr[j], Color.Red);
+                        else
+                            Draw(stor.arr[j], Color.Red);
+                    }
                     else
-                        Draw(stor.arr[j], Color.Red);
-                }
-                else
-                {
-                    if (stor.arr[j].IfGroup() == 1)
-                        DrawGroup(stor.arr[j], stor.arr[j].clr);
-                    else
-                        Draw(stor.arr[j], stor.arr[j].clr);
+                    {
+                        if (stor.arr[j].IfGroup() == 1)
+                            DrawGroup(stor.arr[j], stor.arr[j].clr);
+                        else
+                            Draw(stor.arr[j], stor.arr[j].clr);
+                    }
                 }
             }
         }
