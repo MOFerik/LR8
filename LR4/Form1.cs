@@ -100,8 +100,8 @@ namespace LR4
             bool select;
             public bool Check(int x, int y) // Функция проверки нажатия на объект
             {
-                select = false;
                 List<int> selected = new List<int>();
+                select = false;
                 for (int j = 0; j < this.arr.Count; j++)
                 {
                     if (this.arr[j].IfGroup() == 0)
@@ -125,26 +125,11 @@ namespace LR4
                     }
                     else
                     {
-                        for(int q = 0; q < this.arr[j].arr.Count; q++)
+                        bool found = CheckGroup(x, y, this.arr[j]);
+                        if (found)
                         {
-                            if (this.arr[j].arr[q].figure != 3)
-                            {
-                                if (x > this.arr[j].arr[q].x - this.arr[j].arr[q].r / 2 && x < this.arr[j].arr[q].x + this.arr[j].arr[q].r / 2 && y > this.arr[j].arr[q].y - this.arr[j].arr[q].r / 2 && y < this.arr[j].arr[q].y + this.arr[j].arr[q].r / 2)
-                                {
-                                    selected.Add(j);
-                                    select = true;
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                if (!(x > this.arr[j].arr[q].lineX1 && x > this.arr[j].arr[q].lineX2) && !(y > this.arr[j].arr[q].lineY1 && y > this.arr[j].arr[q].lineY2) && !(x < this.arr[j].arr[q].lineX1 && x < this.arr[j].arr[q].lineX2) && !(y < this.arr[j].arr[q].lineY1 && y < this.arr[j].arr[q].lineY2) && div((x - this.arr[j].arr[q].lineX1), (y - this.arr[j].arr[q].lineY1)) == div((this.arr[j].arr[q].lineX2 - this.arr[j].arr[q].lineX1), (this.arr[j].arr[q].lineY2 - this.arr[j].arr[q].lineY1)))
-                                {
-                                    selected.Add(j);
-                                    select = true;
-                                    break;
-                                }
-                            }
+                            selected.Add(j);
+                            select = true;
                         }
                     }
                 }
@@ -155,11 +140,44 @@ namespace LR4
                         this.arr[j].flag = false;
                     }
                 }
-                for (int j = 0; j < selected.Count; j++)
+                for (int q = 0; q < selected.Count; q++)
                 {
-                    this.arr[selected[j]].flag = true;
+                    this.arr[selected[q]].flag = true;
                 }
                 return select;
+            }
+
+            public bool CheckGroup(int x, int y, CCircle group)
+            {
+                for (int q = 0; q < group.arr.Count; q++)
+                {
+                    if (group.arr[q].IfGroup() == 0)
+                    {
+                        if (group.arr[q].figure != 3)
+                        {
+                            if (x > group.arr[q].x - group.arr[q].r / 2 && x < group.arr[q].x + group.arr[q].r / 2 && y > group.arr[q].y - group.arr[q].r / 2 && y < group.arr[q].y + group.arr[q].r / 2)
+                            {
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            if (!(x > group.arr[q].lineX1 && x > group.arr[q].lineX2) && !(y > group.arr[q].lineY1 && y > group.arr[q].lineY2) && !(x < group.arr[q].lineX1 && x < group.arr[q].lineX2) && !(y < group.arr[q].lineY1 && y < group.arr[q].lineY2) && div((x - group.arr[q].lineX1), (y - group.arr[q].lineY1)) == div((group.arr[q].lineX2 - group.arr[q].lineX1), (group.arr[q].lineY2 - group.arr[q].lineY1)))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bool found = CheckGroup(x, y, group.arr[q]);
+                        if (found)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
 
             public void AddStor(CCircle circ) // Добавление созданного объекта в хранилище
@@ -200,8 +218,6 @@ namespace LR4
             }
         }
 
-        CircleStorage stor = new CircleStorage();
-
         public class GroupedFigures : CCircle
         {
             public void AddGroup(CCircle circ) // Добавление созданного объекта в хранилище
@@ -235,9 +251,17 @@ namespace LR4
                         circ.Load(reader);
                         this.arr.Add(circ);
                     }
+                    else
+                    {
+                        GroupedFigures group = new GroupedFigures();
+                        group.Load(reader);
+                        this.arr.Add(group);
+                    }
                 }
             }
         }
+
+        CircleStorage stor = new CircleStorage();
 
         public void Draw(CCircle circle, Color clr)
         {
@@ -276,38 +300,45 @@ namespace LR4
         {
             for (int i = 0; i < group.arr.Count; i++)
             {
-                if (clr != Color.Red && clr != Color.White)
+                if (group.arr[i].IfGroup() == 0)
                 {
-                    clr = group.arr[i].clr;
-                }
-                Pen mPen = new Pen(clr, 3);
-                SolidBrush brush = new SolidBrush(clr);
-                Rectangle rect = new Rectangle(group.arr[i].x - group.arr[i].r / 2, group.arr[i].y - group.arr[i].r / 2, group.arr[i].r, group.arr[i].r);
-                Rectangle dot = new Rectangle(group.arr[i].x, group.arr[i].y, 2, 2);
-                switch (group.arr[i].figure)
-                {
-                    case 0:
-                        this.panel1.CreateGraphics().DrawEllipse(mPen, rect);
-                        break;
-                    case 1:
-                        this.panel1.CreateGraphics().DrawRectangle(mPen, rect);
-                        break;
-                    case 2:
-                        this.panel1.CreateGraphics().DrawPolygon(mPen, new PointF[] { new PointF(group.arr[i].x - group.arr[i].r / 2, group.arr[i].y + group.arr[i].r / 2), new PointF(group.arr[i].x + group.arr[i].r / 2, group.arr[i].y + group.arr[i].r / 2), new PointF(group.arr[i].x, group.arr[i].y - group.arr[i].r / 2) });
-                        break;
-                    case 3:
-                        if (stor.readyLine >= 0)
+                    if (clr != Color.Red && clr != Color.White)
+                    {
+                        clr = group.arr[i].clr;
+                    }
+                    Pen mPen = new Pen(clr, 3);
+                    SolidBrush brush = new SolidBrush(clr);
+                    Rectangle rect = new Rectangle(group.arr[i].x - group.arr[i].r / 2, group.arr[i].y - group.arr[i].r / 2, group.arr[i].r, group.arr[i].r);
+                    Rectangle dot = new Rectangle(group.arr[i].x, group.arr[i].y, 2, 2);
+                    switch (group.arr[i].figure)
+                    {
+                        case 0:
+                            this.panel1.CreateGraphics().DrawEllipse(mPen, rect);
+                            break;
+                        case 1:
+                            this.panel1.CreateGraphics().DrawRectangle(mPen, rect);
+                            break;
+                        case 2:
+                            this.panel1.CreateGraphics().DrawPolygon(mPen, new PointF[] { new PointF(group.arr[i].x - group.arr[i].r / 2, group.arr[i].y + group.arr[i].r / 2), new PointF(group.arr[i].x + group.arr[i].r / 2, group.arr[i].y + group.arr[i].r / 2), new PointF(group.arr[i].x, group.arr[i].y - group.arr[i].r / 2) });
+                            break;
+                        case 3:
+                            if (stor.readyLine >= 0)
+                                panel1.CreateGraphics().FillEllipse(brush, dot);
+                            else
+                            {
+                                this.panel1.CreateGraphics().DrawLine(mPen, group.arr[i].lineX1, group.arr[i].lineY1, group.arr[i].lineX2, group.arr[i].lineY2);
+                                panel1.CreateGraphics().FillEllipse(brush, group.arr[i].lineX1, group.arr[i].lineY1, 2, 2);
+                                panel1.CreateGraphics().FillEllipse(brush, group.arr[i].lineX2, group.arr[i].lineY2, 2, 2);
+                            }
+                            break;
+                        case 4:
                             panel1.CreateGraphics().FillEllipse(brush, dot);
-                        else
-                        {
-                            this.panel1.CreateGraphics().DrawLine(mPen, group.arr[i].lineX1, group.arr[i].lineY1, group.arr[i].lineX2, group.arr[i].lineY2);
-                            panel1.CreateGraphics().FillEllipse(brush, group.arr[i].lineX1, group.arr[i].lineY1, 2, 2);
-                            panel1.CreateGraphics().FillEllipse(brush, group.arr[i].lineX2, group.arr[i].lineY2, 2, 2);
-                        }
-                        break;
-                    case 4:
-                        panel1.CreateGraphics().FillEllipse(brush, dot);
-                        break;
+                            break;
+                    }
+                }
+                else
+                {
+                    DrawGroup(group.arr[i], clr);
                 }
             }
         }
@@ -803,23 +834,9 @@ namespace LR4
             {
                 if (stor.arr[j].flag == true)
                 {
-                    if (stor.arr[j].IfGroup() == 0)
-                    {
-                        group.AddGroup(stor.arr[j]);
-                        stor.arr.Remove(stor.arr[j]);
-                        j--;
-                    }
-                    else
-                    {
-                        for (int i = 0; i < stor.arr[j].arr.Count; i++)
-                        {
-                            group.AddGroup(stor.arr[j].arr[i]);
-                            stor.arr[j].arr.Remove(stor.arr[j].arr[i]);
-                            i--;
-                        }
-                        stor.arr.Remove(stor.arr[j]);
-                        j--;
-                    }
+                    group.AddGroup(stor.arr[j]);
+                    stor.arr.RemoveAt(j);
+                    j--;
                 }
             }
             stor.AddStor(group);
@@ -836,8 +853,9 @@ namespace LR4
                         for (int i = 0; i < stor.arr[j].arr.Count; i++)
                         {
                             stor.arr.Add(stor.arr[j].arr[i]);
+                            stor.arr[stor.arr.Count() - 1].flag = false;
                         }
-                        stor.arr.Remove(stor.arr[j]);
+                        stor.arr.RemoveAt(j);
                         j--;
                     }
                 }
