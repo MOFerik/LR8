@@ -17,7 +17,9 @@ namespace LR4
         {
             InitializeComponent();
             this.panel1.BackColor = System.Drawing.Color.White;
-        }
+            stor.Notify += updateTree;
+            treeView1.Nodes.Add("Корень");
+        }    
 
         public class CCircle // Класс фигур
         {
@@ -83,6 +85,9 @@ namespace LR4
 
         public class CircleStorage // Класс-хранилище фигур
         {
+            public delegate void AddedNode(CCircle circ);
+            public event AddedNode Notify;
+
             int div(int a, int b)
             {
                 if (b != 0)
@@ -183,6 +188,13 @@ namespace LR4
             public void AddStor(CCircle circ) // Добавление созданного объекта в хранилище
             {
                 arr.Add(circ);
+                Notify.Invoke(circ);
+            }
+
+            public void DelStor(CCircle circ)
+            {
+                arr.Remove(circ);
+                Notify.Invoke(circ);
             }
 
             public void SaveStor()
@@ -456,7 +468,7 @@ namespace LR4
                             Draw(stor.arr[j], Color.White);
                         else
                             DrawGroup(stor.arr[j], Color.White);
-                        stor.arr.Remove(stor.arr[j]);
+                        stor.DelStor(stor.arr[j]);
                         j--;
                     }
             }
@@ -806,6 +818,37 @@ namespace LR4
             }
         }
 
+        public TreeNode treeGroup(CCircle circ, int j)
+        {
+            TreeNode trNd = new TreeNode();
+            if (circ.IfGroup() == 0)
+            {
+                trNd.Text = Convert.ToString(j);
+                return trNd;
+            }
+            else
+            {
+                for (int i = 0; i < circ.arr.Count; i++)
+                {
+                    trNd.Nodes.Add(treeGroup(circ.arr[i], i));
+                }
+                trNd.Text = "Группа " + Convert.ToString(j) ;
+                return trNd;
+            }
+        }
+
+        public void updateTree(CCircle circ)
+        {
+            for (int i = 0; i < stor.arr.Count; i++)
+            {
+                treeView1.Nodes[0].Nodes.Clear();
+            }
+            for (int i = 0; i < stor.arr.Count; i++)
+            {
+                treeView1.Nodes[0].Nodes.Add(treeGroup(stor.arr[i], i));
+            }
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
             for (int j = 0; j < stor.arr.Count; j++)
@@ -835,7 +878,7 @@ namespace LR4
                 if (stor.arr[j].flag == true)
                 {
                     group.AddGroup(stor.arr[j]);
-                    stor.arr.RemoveAt(j);
+                    stor.DelStor(stor.arr[j]);
                     j--;
                 }
             }
@@ -855,7 +898,7 @@ namespace LR4
                             stor.arr.Add(stor.arr[j].arr[i]);
                             stor.arr[stor.arr.Count() - 1].flag = false;
                         }
-                        stor.arr.RemoveAt(j);
+                        stor.DelStor(stor.arr[j]);
                         j--;
                     }
                 }
